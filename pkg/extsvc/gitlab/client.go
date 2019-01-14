@@ -22,6 +22,9 @@ import (
 
 var requestCounter = metrics.NewRequestCounter("gitlab", "Total number of requests sent to the GitLab API.")
 
+// NEXT: need to support specifying a token with each client request (instead of per client);
+// ensure projCache remains valid
+
 // Client is a GitLab API client.
 type Client struct {
 	baseURL *url.URL // base URL of GitLab; e.g., https://gitlab.com or https://gitlab.example.com
