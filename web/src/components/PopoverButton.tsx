@@ -1,5 +1,6 @@
 import MenuDownIcon from 'mdi-react/MenuDownIcon'
 import * as React from 'react'
+import onClickOutside from 'react-onclickoutside'
 import Popover, { PopoverProps } from 'reactstrap/lib/Popover'
 import { Subscription } from 'rxjs'
 import { Key } from 'ts-key-enum'
@@ -60,7 +61,7 @@ interface State {
 /**
  * A button that toggles the visibility of a popover.
  */
-export class PopoverButton extends React.PureComponent<Props, State> {
+class PopoverButton extends React.PureComponent<Props, State> {
     public state: State = { open: false }
 
     private subscriptions = new Subscription()
@@ -73,7 +74,7 @@ export class PopoverButton extends React.PureComponent<Props, State> {
 
     public componentWillReceiveProps(props: Props): void {
         if (props.hideOnChange !== this.props.hideOnChange) {
-            this.setState({ open: false })
+            this.hide()
         }
     }
 
@@ -110,7 +111,7 @@ export class PopoverButton extends React.PureComponent<Props, State> {
                         this.props.link ? 'popover-button__btn popover-button__btn--link' : 'popover-button__container'
                     }
                     to={this.props.link}
-                    onClick={this.props.link ? this.onClickLink : this.onPopoverVisibilityToggle}
+                    onClick={this.props.link ? this.hide : this.onPopoverVisibilityToggle}
                 >
                     {this.props.children}{' '}
                     {!this.props.link && <MenuDownIcon className="icon-inline popover-button__icon" />}
@@ -129,14 +130,14 @@ export class PopoverButton extends React.PureComponent<Props, State> {
         )
     }
 
-    private onClickLink = (): void => {
-        this.setState({ open: false })
-    }
+    public handleClickOutside = () => this.hide()
+
+    private hide = () => this.setState({ open: false })
 
     private onGlobalKeyDown = (event: KeyboardEvent) => {
         if (event.key === Key.Escape) {
             // Always close the popover when Escape is pressed, even when in an input.
-            this.setState({ open: false })
+            this.hide()
             return
         }
 
@@ -161,6 +162,8 @@ export class PopoverButton extends React.PureComponent<Props, State> {
 
     private onPopoverVisibilityToggle = () => this.setState(prevState => ({ open: !prevState.open }))
 }
+
+export default onClickOutside(PopoverButton)
 
 /** Reports whether elem is a field that accepts user keyboard input.  */
 function isInputLike(elem: HTMLElement): boolean {

@@ -1,6 +1,7 @@
 import { Shortcut, ShortcutProps } from '@slimsag/react-shortcuts'
 import MenuDownIcon from 'mdi-react/MenuDownIcon'
 import * as React from 'react'
+import onClickOutside from 'react-onclickoutside'
 import Popover, { PopoverProps } from 'reactstrap/lib/Popover'
 import { LinkOrSpan } from './LinkOrSpan'
 
@@ -53,14 +54,14 @@ interface State {
 /**
  * A button that toggles the visibility of a popover.
  */
-export class PopoverButton extends React.PureComponent<Props, State> {
+class PopoverButton extends React.PureComponent<Props, State> {
     public state: State = { open: false }
 
     private rootRef: HTMLElement | null = null
 
     public componentWillReceiveProps(props: Props): void {
         if (props.hideOnChange !== this.props.hideOnChange) {
-            this.setState({ open: false })
+            this.hide()
         }
     }
 
@@ -97,7 +98,7 @@ export class PopoverButton extends React.PureComponent<Props, State> {
                             : 'popover-button2__container'
                     }
                     to={this.props.link}
-                    onClick={this.props.link ? this.onClickLink : this.toggleVisibility}
+                    onClick={this.props.link ? this.hide : this.toggleVisibility}
                 >
                     {this.props.children}{' '}
                     {!this.props.link && <MenuDownIcon className="icon-inline popover-button2__icon" />}
@@ -121,11 +122,13 @@ export class PopoverButton extends React.PureComponent<Props, State> {
         )
     }
 
-    private onClickLink = (e: React.MouseEvent<HTMLElement>): void => {
-        this.setState({ open: false })
-    }
+    public handleClickOutside = () => this.hide()
+
+    private hide = () => this.setState({ open: false })
 
     private setRootRef = (e: HTMLElement | null) => (this.rootRef = e)
 
     private toggleVisibility = () => this.setState(prevState => ({ open: !prevState.open }))
 }
+
+export default onClickOutside(PopoverButton)

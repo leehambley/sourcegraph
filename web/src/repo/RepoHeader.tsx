@@ -10,7 +10,7 @@ import { ExtensionsControllerProps } from '../../../shared/src/extensions/contro
 import * as GQL from '../../../shared/src/graphql/schema'
 import { PlatformContextProps } from '../../../shared/src/platform/context'
 import { ErrorLike, isErrorLike } from '../../../shared/src/util/errors'
-import { PopoverButton } from '../components/PopoverButton'
+import PopoverButton from '../components/PopoverButton'
 import { ActionButtonDescriptor } from '../util/contributions'
 import { ResolvedRev } from './backend'
 import { RepositoriesPopover } from './RepositoriesPopover'
