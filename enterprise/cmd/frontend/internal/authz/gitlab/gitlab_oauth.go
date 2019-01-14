@@ -1,6 +1,24 @@
 package gitlab
 
 /*
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"math"
+	"net/url"
+	"strconv"
+	"time"
+
+	"github.com/sourcegraph/sourcegraph/cmd/frontend/authz"
+	"github.com/sourcegraph/sourcegraph/cmd/frontend/types"
+	"github.com/sourcegraph/sourcegraph/pkg/api"
+	"github.com/sourcegraph/sourcegraph/pkg/extsvc"
+	"github.com/sourcegraph/sourcegraph/pkg/extsvc/gitlab"
+	"github.com/sourcegraph/sourcegraph/pkg/rcache"
+	log15 "gopkg.in/inconshreveable/log15.v2"
+)
+
 // TODO: this should replace the old sudo-token-based auth method
 
 type GitLabOAuthAuthzProvider struct {
