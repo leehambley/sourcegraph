@@ -1,6 +1,5 @@
 package gitlab
 
-/*
 import (
 	"context"
 	"encoding/json"
@@ -42,8 +41,8 @@ type GitLabOAuthAuthzProviderOp struct {
 }
 
 func NewProvider(op GitLabOAuthAuthzProviderOp) *GitLabOAuthAuthzProvider {
-	p := &GitLabAuthzProvider{
-		client:    gitlab.NewClient(op.BaseURL, op.SudoToken, "", nil),
+	p := &GitLabOAuthAuthzProvider{
+		client:    gitlab.NewClient(op.BaseURL, "", "", nil),
 		clientURL: op.BaseURL,
 		codeHost:  gitlab.NewCodeHost(op.BaseURL),
 		cache:     op.MockCache,
@@ -55,20 +54,20 @@ func NewProvider(op GitLabOAuthAuthzProviderOp) *GitLabOAuthAuthzProvider {
 	return p
 }
 
-func (p *GitLabAuthzProvider) Validate() (problems []string) {
+func (p *GitLabOAuthAuthzProvider) Validate() (problems []string) {
 	// TODO(beyang)
 	return nil
 }
 
-func (p *GitLabAuthzProvider) ServiceID() string {
+func (p *GitLabOAuthAuthzProvider) ServiceID() string {
 	return p.codeHost.ServiceID()
 }
 
-func (p *GitLabAuthzProvider) ServiceType() string {
+func (p *GitLabOAuthAuthzProvider) ServiceType() string {
 	return p.codeHost.ServiceType()
 }
 
-func (p *GitLabAuthzProvider) RepoPerms(ctx context.Context, account *extsvc.ExternalAccount, repos map[authz.Repo]struct{}) (map[api.RepoName]map[authz.Perm]bool, error) {
+func (p *GitLabOAuthAuthzProvider) RepoPerms(ctx context.Context, account *extsvc.ExternalAccount, repos map[authz.Repo]struct{}) (map[api.RepoName]map[authz.Perm]bool, error) {
 	accountID := "" // empty means public / unauthenticated to the code host
 	if account != nil && account.ServiceID == p.codeHost.ServiceID() && account.ServiceType == p.codeHost.ServiceType() {
 		accountID = account.AccountID
@@ -80,7 +79,11 @@ func (p *GitLabAuthzProvider) RepoPerms(ctx context.Context, account *extsvc.Ext
 		accessibleRepos = r
 	} else {
 		var err error
-		// gitlab.GetExternalAccountData
+
+		_, tok, err := gitlab.GetExternalAccountData(account.AccountData)
+		if err != nil {
+			return nil, err
+		}
 
 		// NEXT
 
@@ -125,4 +128,38 @@ func (p *GitLabOAuthAuthzProvider) Repos(ctx context.Context, repos map[authz.Re
 func (p *GitLabOAuthAuthzProvider) FetchAccount(ctx context.Context, user *types.User, current []*extsvc.ExternalAccount) (mine *extsvc.ExternalAccount, err error) {
 	return nil, nil
 }
-*/
+
+// fetchUserAccessList fetches the list of project IDs that are readable to a user from the GitLab API.
+func (p *GitLabOAuthAuthzProvider) fetchUserAccessList(ctx context.Context, glUserID string) (map[int]struct{}, error) {
+	q := make(url.Values)
+	if glUserID != "" {
+		q.Add("sudo", glUserID)
+	} else {
+		q.Add("visibility", "public")
+	}
+	q.Add("per_page", "100")
+
+	projIDs := make(map[int]struct{})
+	var iters = 0
+	var pageURL = "projects?" + q.Encode()
+	for {
+		if iters >= 100 && iters%100 == 0 {
+			log15.Warn("Excessively many GitLab API requests to fetch complete user authz list", "iters", iters, "gitlabUserID", glUserID, "host", p.clientURL.String())
+		}
+
+		projs, nextPageURL, err := p.client.ListProjects(ctx, pageURL)
+		if err != nil {
+			return nil, err
+		}
+		for _, proj := range projs {
+			projIDs[proj.ID] = struct{}{}
+		}
+
+		if nextPageURL == nil {
+			break
+		}
+		pageURL = *nextPageURL
+		iters++
+	}
+	return projIDs, nil
+}
