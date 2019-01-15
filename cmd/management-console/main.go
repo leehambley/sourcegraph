@@ -147,7 +147,6 @@ func main() {
 		host = "127.0.0.1"
 	}
 	addr := net.JoinHostPort(host, port)
-	log15.Info("management-console: listening", "addr", addr)
 
 	if err := configureTLS(); err != nil {
 		log.Fatal("failed to configure TLS: error:", err)
